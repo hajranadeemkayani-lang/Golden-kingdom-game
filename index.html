@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>The Golden Kingdom - Kids Learning & Fun Games</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Mali:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --gold-primary: #ffd700;
+      --gold-dark: #b8860b;
+      --gold-light: #fff8dc;
+      --amber-bg: #2a1b00;
+      --purple-accent: #6b21a8;
+      --text-dark: #331f00;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
+      background: linear-gradient(135deg, #1c0d02 0%, #3a1c00 40%, #200833 100%);
+      color: #fff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Shimmer Effect */
+    .shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Bouncy Kid Button Styling */
+    .btn-bounce {
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease;
+    }
+    .btn-bounce:hover {
+      transform: translateY(-4px) scale(1.02);
+    }
+    .btn-bounce:active {
+      transform: translateY(2px) scale(0.98);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1a0f00;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #ffd700;
+      border-radius: 5px;
+    }
+
+    /* Floating animation for reward coins */
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+    }
+    .floating-coin-text {
+      position: absolute;
+      animation: floatUp 1s ease-out forwards;
+      pointer-events: none;
+      font-weight: 800;
+      color: #ffe033;
+      text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+      z-index: 999;
+    }
+
+    /* Flip Card CSS */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.4s ease;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Pulse Glow */
+    .glow-gold {
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen relative">
+
+  <!-- Background Stars & Sparkles Canvas -->
+  <canvas id="bgCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-0"></canvas>
+
+  <!-- Main Container -->
+  <div class="relative z-10 flex flex-col min-h-screen max-w-5xl mx-auto w-full px-3 py-3 md:px-6 md:py-5">
+
+    <!-- Top Navigation & Scoreboard -->
+    <header class="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 border-4 border-white rounded-3xl p-3 md:p-4 shadow-2xl mb-4 text-amber-950 flex flex-col md:flex-row items-center justify-between gap-3 relative overflow-hidden">
+      <div class="shimmer absolute inset-0 pointer-events-none"></div>
+
+      <!-- Title & Avatar -->
+      <div class="flex items-center gap-3 z-10 cursor-pointer" onclick="switchTab('home')">
+        <div id="avatarDisplay" class="w-12 h-12 md:w-14 md:h-14 bg-amber-100 border-2 border-amber-800 rounded-full flex items-center justify-center text-2xl md:text-3xl shadow-inner relative">
+          👑
+          <span id="petBadge" class="absolute -bottom-1 -right-1 text-base">🐶</span>
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-black tracking-wide drop-shadow-sm flex items-center gap-2">
+            THE GOLDEN KINGDOM 🪙
+          </h1>
+          <p id="playerTitle" class="text-xs md:text-sm font-bold text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full inline-block">
+            Young Explorer
+          </p>
+        </div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="flex items-center gap-2 md:gap-4 z-10 w-full md:w-auto justify-between md:justify-end">
+        <!-- Coin Badge -->
+        <div class="bg-amber-950/80 text-amber-300 border-2 border-amber-300 px-3 py-1.5 rounded-2xl flex items-center gap-2 font-bold shadow-lg">
+          <span class="text-xl md:text-2xl animate-bounce">🪙</span>
+          <span id="coinCount" class="text-lg md:text-xl font-black">0</span>
+        </div>
+
+        <!-- Level & XP Badge -->
+        <div class="bg-amber-950/80 text-white border-2 border-amber-300 px-3 py-1 rounded-2xl flex flex-col justify-center shadow-lg min-w-[110px]">
+          <div class="flex justify-between items-center text-xs font-bold text-amber-300 mb-0.5">
+            <span>LVL <span id="levelNum">1</span></span>
+            <span id="xpText">0/50</span>
+          </div>
+          <div class="w-full bg-amber-950 rounded-full h-2.5 overflow-hidden border border-amber-400/50">
+            <div id="xpBar" class="bg-gradient-to-r from-yellow-400 to-amber-300 h-full w-0 transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <!-- Audio Mute Button -->
+        <button id="soundToggleBtn" onclick="toggleAudio()" class="btn-bounce bg-amber-200 hover:bg-white text-amber-900 p-2 md:p-2.5 rounded-2xl border-2 border-amber-800 font-bold text-lg flex items-center justify-center shadow-md">
+          <i class="fas fa-volume-up" id="soundIcon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex justify-between md:justify-center gap-1.5 md:gap-3 mb-4 z-10 overflow-x-auto pb-1">
+      <button onclick="switchTab('home')" id="tab-home" class="nav-tab btn-bounce bg-amber-500 text-amber-950 border-2 border-white px-3 md:px-5 py-2 rounded-2xl font-bold flex items-center gap-1.5 text-sm md:text-base shadow-lg active">
+        <i class="fas fa-gamepad"></i> <span>Games</span>
+      </button>
+      <button onclick="switchTab('shop')" id="tab-shop" class="nav-tab btn-bounce bg-amber-900/80 text-amber-200 hover:bg-amber-700 border-2 border-amber-500/50 px-3 md:px-5 py-2 rounded-2xl font-bold flex items-center gap-1.5 text-sm md:text-base shadow-lg">
+        <i class="fas fa-store text-yellow-400"></i> <span>Royal Shop</span>
+      </button>
+      <button onclick="switchTab('trophies')" id="tab-trophies" class="nav-tab btn-bounce bg-amber-900/80 text-amber-200 hover:bg-amber-700 border-2 border-amber-500/50 px-3 md:px-5 py-2 rounded-2xl font-bold flex items-center gap-1.5 text-sm md:text-base shadow-lg">
+        <i class="fas fa-trophy text-yellow-400"></i> <span>Trophies</span>
+      </button>
+    </nav>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="flex-grow z-10 relative">
+
+      <!-- ================= HOME / GAMES SELECTION VIEW ================= -->
+      <section id="view-home" class="view-panel transition-all duration-300">
+        <!-- Hero Welcome Card -->
+        <div class="bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-purple-950/90 border-4 border-amber-400 rounded-3xl p-5 mb-5 text-center shadow-2xl relative overflow-hidden backdrop-blur-md">
+          <h2 class="text-2xl md:text-3xl font-black text-amber-300 mb-2 drop-shadow-md">
+            Welcome, Royal Explorer! 🌟
+          </h2>
+          <p class="text-amber-100 text-sm md:text-base max-w-xl mx-auto">
+            Play fun learning games, collect shiny Golden Coins, level up, and unlock awesome magical pets & royal crowns!
+          </p>
+        </div>
+
+        <!-- Games Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-5">
+          <!-- Game 1: Math Quest -->
+          <div onclick="launchGame('math')" class="btn-bounce bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-400 border-4 border-white rounded-3xl p-5 text-amber-950 cursor-pointer shadow-xl relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-7xl opacity-20 group-hover:scale-125 transition-transform duration-300">🧮</div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-4xl bg-white/60 p-2.5 rounded-2xl shadow-inner">🧮</span>
+              <div>
+                <h3 class="text-xl font-black">Golden Math Quest</h3>
+                <span class="bg-amber-900 text-yellow-300 text-xs px-2.5 py-0.5 rounded-full font-bold">Earn up to 20 Coins</span>
+              </div>
+            </div>
+            <p class="text-amber-950/90 text-sm font-semibold">
+              Solve math puzzles, build your winning streak, and open golden chests!
+            </p>
+            <div class="mt-4 flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-900 uppercase tracking-wider">Addition • Subtraction • Multiplication</span>
+              <span class="bg-white text-amber-950 px-4 py-1.5 rounded-full font-black text-sm shadow-md flex items-center gap-1 group-hover:bg-amber-950 group-hover:text-amber-300 transition-colors">
+                PLAY <i class="fas fa-play text-xs"></i>
+              </span>
+            </div>
+          </div>
+
+          <!-- Game 2: Coin Catcher -->
+          <div onclick="launchGame('catcher')" class="btn-bounce bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 border-4 border-white rounded-3xl p-5 text-amber-950 cursor-pointer shadow-xl relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-7xl opacity-20 group-hover:scale-125 transition-transform duration-300">🪙</div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-4xl bg-white/60 p-2.5 rounded-2xl shadow-inner">🪙</span>
+              <div>
+                <h3 class="text-xl font-black">Golden Coin Catcher</h3>
+                <span class="bg-amber-900 text-yellow-300 text-xs px-2.5 py-0.5 rounded-full font-bold">Fast Action</span>
+              </div>
+            </div>
+            <p class="text-amber-950/90 text-sm font-semibold">
+              Tap falling coins, stars, and treasure chests before time runs out! Watch out for bombs!
+            </p>
+            <div class="mt-4 flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-900 uppercase tracking-wider">Arcade • Speed</span>
+              <span class="bg-white text-amber-950 px-4 py-1.5 rounded-full font-black text-sm shadow-md flex items-center gap-1 group-hover:bg-amber-950 group-hover:text-amber-300 transition-colors">
+                PLAY <i class="fas fa-play text-xs"></i>
+              </span>
+            </div>
+          </div>
+
+          <!-- Game 3: Word Wizard -->
+          <div onclick="launchGame('word')" class="btn-bounce bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-400 border-4 border-white rounded-3xl p-5 text-amber-950 cursor-pointer shadow-xl relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-7xl opacity-20 group-hover:scale-125 transition-transform duration-300">🔤</div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-4xl bg-white/60 p-2.5 rounded-2xl shadow-inner">🔤</span>
+              <div>
+                <h3 class="text-xl font-black">Word & Phonics Wizard</h3>
+                <span class="bg-amber-900 text-yellow-300 text-xs px-2.5 py-0.5 rounded-full font-bold">Spelling Fun</span>
+              </div>
+            </div>
+            <p class="text-amber-950/90 text-sm font-semibold">
+              Unscramble scrambled letters to spell magical kingdom words with emoji clues!
+            </p>
+            <div class="mt-4 flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-900 uppercase tracking-wider">Vocabulary • Reading</span>
+              <span class="bg-white text-amber-950 px-4 py-1.5 rounded-full font-black text-sm shadow-md flex items-center gap-1 group-hover:bg-amber-950 group-hover:text-amber-300 transition-colors">
+                PLAY <i class="fas fa-play text-xs"></i>
+              </span>
+            </div>
+          </div>
+
+          <!-- Game 4: Royal Memory -->
+          <div onclick="launchGame('memory')" class="btn-bounce bg-gradient-to-br from-yellow-200 via-amber-300 to-orange-300 border-4 border-white rounded-3xl p-5 text-amber-950 cursor-pointer shadow-xl relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 text-7xl opacity-20 group-hover:scale-125 transition-transform duration-300">🧩</div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-4xl bg-white/60 p-2.5 rounded-2xl shadow-inner">🧩</span>
+              <div>
+                <h3 class="text-xl font-black">Royal Memory Match</h3>
+                <span class="bg-amber-900 text-yellow-300 text-xs px-2.5 py-0.5 rounded-full font-bold">Brain Trainer</span>
+              </div>
+            </div>
+            <p class="text-amber-950/90 text-sm font-semibold">
+              Match pairs of kingdom treasures, dragons, shields, and crowns in record time!
+            </p>
+            <div class="mt-4 flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-900 uppercase tracking-wider">Focus • Memory</span>
+              <span class="bg-white text-amber-950 px-4 py-1.5 rounded-full font-black text-sm shadow-md flex items-center gap-1 group-hover:bg-amber-950 group-hover:text-amber-300 transition-colors">
+                PLAY <i class="fas fa-play text-xs"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= GAME PLAY CONTAINER ================= -->
+      <section id="view-game" class="view-panel hidden transition-all duration-300">
+        <!-- Game Header Bar -->
+        <div class="flex items-center justify-between mb-3 bg-amber-950/80 p-3 border-2 border-amber-400 rounded-2xl backdrop-blur-md">
+          <button onclick="exitGame()" class="btn-bounce bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold px-4 py-1.5 rounded-xl text-sm flex items-center gap-2 shadow">
+            <i class="fas fa-arrow-left"></i> Home
+          </button>
+          <h2 id="currentGameTitle" class="text-lg md:text-xl font-black text-amber-300 flex items-center gap-2">
+            Game Title
+          </h2>
+          <div id="gameExtraHeader" class="text-sm font-bold text-amber-200"></div>
+        </div>
+
+        <!-- Dynamic Game Arena Card -->
+        <div class="bg-amber-50/95 border-4 border-amber-400 rounded-3xl p-4 md:p-6 text-amber-950 shadow-2xl min-h-[420px] flex flex-col justify-between relative overflow-hidden">
+
+          <!-- GAME 1: MATH QUEST UI -->
+          <div id="game-math-ui" class="game-sub-ui hidden flex-grow flex flex-col justify-between text-center">
+            <div class="flex justify-between items-center mb-2">
+              <span class="bg-amber-200 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">Streak: <span id="mathStreak" class="text-amber-700 font-extrabold">0</span> 🔥</span>
+              <div class="flex gap-1">
+                <button onclick="setMathMode('add')" id="mathModeAdd" class="text-xs bg-amber-700 text-white font-bold px-2.5 py-1 rounded-lg">Addition</button>
+                <button onclick="setMathMode('sub')" id="mathModeSub" class="text-xs bg-amber-200 text-amber-900 font-bold px-2.5 py-1 rounded-lg">Subtraction</button>
+                <button onclick="setMathMode('mul')" id="mathModeMul" class="text-xs bg-amber-200 text-amber-900 font-bold px-2.5 py-1 rounded-lg">Multiplication</button>
+              </div>
+            </div>
+
+            <div class="my-auto py-6">
+              <p class="text-amber-800 font-bold text-sm md:text-base uppercase tracking-wider mb-2">Solve to open the Golden Chest!</p>
+              <div class="text-4xl md:text-6xl font-black text-amber-950 mb-6 tracking-wider bg-amber-200/60 py-4 px-6 rounded-2xl inline-block border-2 border-amber-300 shadow-inner">
+                <span id="mathNum1">0</span> <span id="mathOp" class="text-amber-600">+</span> <span id="mathNum2">0</span> = ?
+              </div>
+
+              <!-- Options Grid -->
+              <div id="mathOptionsGrid" class="grid grid-cols-3 gap-3 md:gap-4 max-w-md mx-auto">
+                <!-- Dynamic Math Option Buttons -->
+              </div>
+            </div>
+
+            <div id="mathFeedback" class="h-8 font-bold text-lg flex items-center justify-center"></div>
+          </div>
+
+          <!-- GAME 2: COIN CATCHER UI -->
+          <div id="game-catcher-ui" class="game-sub-ui hidden flex-grow flex flex-col items-center justify-center relative">
+            <div class="w-full flex justify-between items-center mb-2 font-bold text-sm md:text-base bg-amber-200/80 px-4 py-2 rounded-xl">
+              <div>Score: <span id="catcherScore" class="text-amber-700 font-extrabold">0</span></div>
+              <div>Time Left: <span id="catcherTimer" class="text-amber-800 font-extrabold">30</span>s</div>
+            </div>
+
+            <div class="relative w-full h-[320px] bg-gradient-to-b from-amber-100 to-amber-200/80 rounded-2xl border-2 border-amber-300 overflow-hidden shadow-inner">
+              <canvas id="catcherCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+              <!-- Start Overlay -->
+              <div id="catcherStartOverlay" class="absolute inset-0 bg-amber-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center">
+                <span class="text-5xl mb-2">🪙 ✨</span>
+                <h3 class="text-2xl font-black text-amber-300 mb-2">Golden Coin Catcher</h3>
+                <p class="text-amber-100 text-sm max-w-sm mb-4">Tap coins (+1), stars (+2), and treasure chests (+5)! Avoid spike bombs (-3)!</p>
+                <button onclick="startCatcherGameRound()" class="btn-bounce bg-amber-400 hover:bg-yellow-300 text-amber-950 font-black text-lg px-6 py-2.5 rounded-2xl border-2 border-white shadow-lg">
+                  START CATCHING!
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GAME 3: WORD WIZARD UI -->
+          <div id="game-word-ui" class="game-sub-ui hidden flex-grow flex flex-col justify-between text-center">
+            <div class="flex justify-between items-center mb-2">
+              <span class="bg-amber-200 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">Solved: <span id="wordScore" class="text-amber-700 font-extrabold">0</span></span>
+              <button onclick="getWordHint()" class="btn-bounce text-xs bg-amber-400 text-amber-950 font-bold px-3 py-1 rounded-lg border border-amber-600 shadow-sm flex items-center gap-1">
+                💡 Hint (-2 Coins)
+              </button>
+            </div>
+
+            <div class="my-auto py-4">
+              <div id="wordEmojiClue" class="text-6xl md:text-7xl mb-3 animate-bounce">👑</div>
+              <p id="wordClueText" class="text-amber-800 font-bold text-sm md:text-base mb-4">Unscramble the Royal Word!</p>
+
+              <!-- Answer Slot Boxes -->
+              <div id="wordAnswerBox" class="flex justify-center gap-2 mb-6 min-h-[50px] flex-wrap">
+                <!-- Answer Letter Slots -->
+              </div>
+
+              <!-- Available Letters -->
+              <div id="wordLetterTiles" class="flex justify-center gap-2 flex-wrap max-w-lg mx-auto">
+                <!-- Scrambled Tile Buttons -->
+              </div>
+            </div>
+
+            <div id="wordFeedback" class="h-8 font-bold text-lg flex items-center justify-center"></div>
+          </div>
+
+          <!-- GAME 4: MEMORY MATCH UI -->
+          <div id="game-memory-ui" class="game-sub-ui hidden flex-grow flex flex-col justify-between text-center">
+            <div class="flex justify-between items-center mb-3 bg-amber-200/80 px-4 py-2 rounded-xl text-xs md:text-sm font-bold">
+              <div>Matches: <span id="memoryMatches" class="text-amber-800 font-extrabold">0/6</span></div>
+              <div>Moves: <span id="memoryMoves" class="text-amber-800 font-extrabold">0</span></div>
+              <button onclick="initMemoryGame()" class="bg-amber-700 text-white px-2.5 py-1 rounded-lg hover:bg-amber-800">Reset</button>
+            </div>
+
+            <!-- Cards Grid -->
+            <div id="memoryGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 md:gap-3 max-w-md mx-auto my-auto w-full">
+              <!-- Memory Card Items -->
+            </div>
+
+            <div id="memoryFeedback" class="h-6 font-bold text-sm md:text-base text-amber-800 mt-2"></div>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ================= ROYAL SHOP & WARDROBE VIEW ================= -->
+      <section id="view-shop" class="view-panel hidden transition-all duration-300">
+        <div class="bg-amber-950/90 border-4 border-amber-400 rounded-3xl p-5 backdrop-blur-md shadow-2xl">
+          <div class="flex justify-between items-center mb-4 border-b border-amber-700/60 pb-3">
+            <div>
+              <h2 class="text-2xl font-black text-amber-300">👑 Royal Shop & Wardrobe</h2>
+              <p class="text-amber-200 text-xs md:text-sm">Customize your explorer avatar with your Golden Coins!</p>
+            </div>
+            <div class="bg-amber-900 text-amber-300 px-3 py-1 rounded-xl font-black text-base border border-amber-500">
+              🪙 <span id="shopCoinBalance">0</span>
+            </div>
+          </div>
+
+          <!-- Category Sections -->
+          <div class="space-y-6">
+            <!-- Crowns & Hats -->
+            <div>
+              <h3 class="text-amber-400 font-bold text-base mb-2 flex items-center gap-2">
+                <i class="fas fa-crown text-yellow-400"></i> Royal Headwear
+              </h3>
+              <div id="shopHeadwearGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <!-- Items populated by JS -->
+              </div>
+            </div>
+
+            <!-- Royal Pets -->
+            <div>
+              <h3 class="text-amber-400 font-bold text-base mb-2 flex items-center gap-2">
+                <i class="fas fa-paw text-yellow-400"></i> Royal Pets & Companions
+              </h3>
+              <div id="shopPetGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <!-- Items populated by JS -->
+              </div>
+            </div>
+
+            <!-- Royal Titles -->
+            <div>
+              <h3 class="text-amber-400 font-bold text-base mb-2 flex items-center gap-2">
+                <i class="fas fa-scroll text-yellow-400"></i> Royal Titles
+              </h3>
+              <div id="shopTitleGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Items populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= TROPHIES VIEW ================= -->
+      <section id="view-trophies" class="view-panel hidden transition-all duration-300">
+        <div class="bg-amber-950/90 border-4 border-amber-400 rounded-3xl p-5 backdrop-blur-md shadow-2xl">
+          <div class="mb-4 border-b border-amber-700/60 pb-3">
+            <h2 class="text-2xl font-black text-amber-300">🏆 Kingdom Trophies & Achievements</h2>
+            <p class="text-amber-200 text-xs md:text-sm">Complete challenges to earn special golden badges!</p>
+          </div>
+
+          <div id="trophyGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Trophy cards loaded dynamically -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- LEVEL UP / CONGRATS MODAL -->
+  <div id="celebrationModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-gradient-to-b from-amber-300 via-yellow-400 to-amber-500 border-4 border-white rounded-3xl p-6 max-w-sm w-full text-center text-amber-950 shadow-2xl relative animate-bounce-short">
+      <div class="text-6xl mb-2">🎉 👑 🪙</div>
+      <h2 id="modalTitle" class="text-3xl font-black mb-1">LEVEL UP!</h2>
+      <p id="modalSubtitle" class="text-sm font-bold text-amber-900 mb-4">You are now Level 2!</p>
+      
+      <div id="modalRewardBox" class="bg-white/80 rounded-2xl p-3 mb-4 font-bold text-amber-900 border border-amber-300">
+        🎁 Bonus Reward: +50 Golden Coins!
+      </div>
+
+      <button onclick="closeModal()" class="btn-bounce bg-amber-950 hover:bg-black text-yellow-300 font-black text-lg px-8 py-2.5 rounded-2xl border-2 border-amber-300 shadow-xl w-full">
+        AWESOME!
+      </button>
+    </div>
+  </div>
+
+
+  <!-- JS LOGIC CODE -->
+  <script>
+    /* ================= AUDIO SYNTHESIZER (WEB AUDIO API) ================= */
+    class SoundFx {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      }
+
+      playTone(freq, type = 'sine', duration = 0.15, vol = 0.2) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) { console.error(e); }
+      }
+
+      click() { this.playTone(520, 'sine', 0.08, 0.15); }
+      coin() { 
+        this.playTone(987.77, 'sine', 0.1, 0.2); 
+        setTimeout(() => this.playTone(1318.51, 'sine', 0.18, 0.2), 60);
+      }
+      correct() {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((n, i) => {
+          setTimeout(() => this.playTone(n, 'triangle', 0.15, 0.2), i * 70);
+        });
+      }
+      wrong() {
+        this.playTone(220, 'sawtooth', 0.18, 0.2);
+        setTimeout(() => this.playTone(180, 'sawtooth', 0.25, 0.2), 120);
+      }
+      levelUp() {
+        const notes = [440, 554.37, 659.25, 880, 1108.73];
+        notes.forEach((n, i) => {
+          setTimeout(() => this.playTone(n, 'sine', 0.2, 0.25), i * 90);
+        });
+      }
+    }
+
+    const sound = new SoundFx();
+
+    function toggleAudio() {
+      sound.muted = !sound.muted;
+      const icon = document.getElementById('soundIcon');
+      if (sound.muted) {
+        icon.className = 'fas fa-volume-mute text-red-700';
+      } else {
+        icon.className = 'fas fa-volume-up text-amber-900';
+        sound.click();
+      }
+    }
+
+
+    /* ================= GAME STATE & USER DATA ================= */
+    let state = {
+      coins: 0,
+      xp: 0,
+      level: 1,
+      headwear: '👑',
+      pet: '🐶',
+      title: 'Young Explorer',
+      inventory: ['👑', '🐶', 'Young Explorer'],
+      mathSolved: 0,
+      wordsSolved: 0,
+      memoryWon: 0,
+      catcherHighScore: 0
+    };
+
+    // Shop Catalog
+    const shopCatalog = {
+      headwear: [
+        { id: '👑', name: 'Golden Crown', price: 0, icon: '👑' },
+        { id: '🎩', name: 'Magic Tophat', price: 40, icon: '🎩' },
+        { id: '🎓', name: 'Scholar Cap', price: 75, icon: '🎓' },
+        { id: '🪖', name: 'Knight Helmet', price: 120, icon: '🪖' },
+        { id: '🧙‍♂️', name: 'Wizard Hat', price: 180, icon: '🧙‍♂️' }
+      ],
+      pets: [
+        { id: '🐶', name: 'Royal Pup', price: 0, icon: '🐶' },
+        { id: '🐱', name: 'Golden Kitty', price: 50, icon: '🐱' },
+        { id: '🐲', name: 'Baby Dragon', price: 150, icon: '🐲' },
+        { id: '🦄', name: 'Unicorn', price: 250, icon: '🦄' }
+      ],
+      titles: [
+        { id: 'Young Explorer', name: 'Young Explorer', price: 0 },
+        { id: 'Math Champion', name: 'Math Champion', price: 60 },
+        { id: 'Word Wizard', name: 'Word Wizard', price: 90 },
+        { id: 'Kingdom Ruler', name: 'Kingdom Ruler', price: 200 }
+      ]
+    };
+
+    // Trophies Catalog
+    const trophiesCatalog = [
+      { id: 't_coins1', name: 'First Fortune', desc: 'Collect 50 Golden Coins', req: s => s.coins >= 50, icon: '🪙' },
+      { id: 't_math1', name: 'Math Scholar', desc: 'Solve 10 Math problems', req: s => s.mathSolved >= 10, icon: '🧮' },
+      { id: 't_word1', name: 'Spelling Bee', desc: 'Unscramble 5 words', req: s => s.wordsSolved >= 5, icon: '🔤' },
+      { id: 't_memory1', name: 'Sharp Mind', desc: 'Win 3 Memory games', req: s => s.memoryWon >= 3, icon: '🧩' },
+      { id: 't_lvl5', name: 'Kingdom Royalty', desc: 'Reach Level 3', req: s => s.level >= 3, icon: '⭐' }
+    ];
+
+    // Load / Save Local Storage
+    function loadUserData() {
+      const saved = localStorage.getItem('golden_kingdom_save');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          state = { ...state, ...parsed };
+        } catch (e) { console.error(e); }
+      }
+      updateUIHeader();
+    }
+
+    function saveUserData() {
+      localStorage.setItem('golden_kingdom_save', JSON.stringify(state));
+      updateUIHeader();
+    }
+
+    function addCoins(amount, elementTarget) {
+      state.coins += amount;
+      addXP(amount * 2);
+      sound.coin();
+
+      // Show floating coin animation
+      if (elementTarget) {
+        const rect = elementTarget.getBoundingClientRect();
+        const floatEl = document.createElement('div');
+        floatEl.className = 'floating-coin-text text-xl md:text-2xl';
+        floatEl.innerText = `+${amount} 🪙`;
+        floatEl.style.left = `${rect.left + rect.width / 2 - 20}px`;
+        floatEl.style.top = `${rect.top}px`;
+        document.body.appendChild(floatEl);
+        setTimeout(() => floatEl.remove(), 1000);
+      }
+
+      saveUserData();
+      checkTrophies();
+    }
+
+    function addXP(amount) {
+      state.xp += amount;
+      const xpNeeded = state.level * 50;
+
+      if (state.xp >= xpNeeded) {
+        state.xp -= xpNeeded;
+        state.level += 1;
+        state.coins += 30; // Level up reward
+        sound.levelUp();
+        triggerConfetti();
+        showCelebration('LEVEL UP!', `You reached Level ${state.level}!`, '🎁 Bonus Reward: +30 Golden Coins!');
+      }
+      saveUserData();
+    }
+
+    function updateUIHeader() {
+      document.getElementById('coinCount').innerText = state.coins;
+      document.getElementById('levelNum').innerText = state.level;
+      document.getElementById('avatarDisplay').childNodes[0].nodeValue = state.headwear;
+      document.getElementById('petBadge').innerText = state.pet;
+      document.getElementById('playerTitle').innerText = state.title;
+
+      const xpNeeded = state.level * 50;
+      document.getElementById('xpText').innerText = `${state.xp}/${xpNeeded}`;
+      const pct = Math.min(100, Math.floor((state.xp / xpNeeded) * 100));
+      document.getElementById('xpBar').style.width = `${pct}%`;
+
+      const shopBal = document.getElementById('shopCoinBalance');
+      if (shopBal) shopBal.innerText = state.coins;
+    }
+
+
+    /* ================= NAVIGATION & VIEWS ================= */
+    function switchTab(tabId) {
+      sound.click();
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-tab').forEach(el => {
+        el.classList.remove('bg-amber-500', 'text-amber-950');
+        el.classList.add('bg-amber-900/80', 'text-amber-200');
+      });
+
+      const activeTabBtn = document.getElementById(`tab-${tabId}`);
+      if (activeTabBtn) {
+        activeTabBtn.classList.remove('bg-amber-900/80', 'text-amber-200');
+        activeTabBtn.classList.add('bg-amber-500', 'text-amber-950');
+      }
+
+      const viewEl = document.getElementById(`view-${tabId}`);
+      if (viewEl) viewEl.classList.remove('hidden');
+
+      if (tabId === 'shop') renderShop();
+      if (tabId === 'trophies') renderTrophies();
+    }
+
+    function launchGame(gameKey) {
+      sound.click();
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.getElementById('view-game').classList.remove('hidden');
+
+      document.querySelectorAll('.game-sub-ui').forEach(el => el.classList.add('hidden'));
+
+      if (gameKey === 'math') {
+        document.getElementById('currentGameTitle').innerHTML = '🧮 Golden Math Quest';
+        document.getElementById('game-math-ui').classList.remove('hidden');
+        initMathGame();
+      } else if (gameKey === 'catcher') {
+        document.getElementById('currentGameTitle').innerHTML = '🪙 Golden Coin Catcher';
+        document.getElementById('game-catcher-ui').classList.remove('hidden');
+        initCatcherGame();
+      } else if (gameKey === 'word') {
+        document.getElementById('currentGameTitle').innerHTML = '🔤 Word & Phonics Wizard';
+        document.getElementById('game-word-ui').classList.remove('hidden');
+        initWordGame();
+      } else if (gameKey === 'memory') {
+        document.getElementById('currentGameTitle').innerHTML = '🧩 Royal Memory Match';
+        document.getElementById('game-memory-ui').classList.remove('hidden');
+        initMemoryGame();
+      }
+    }
+
+    function exitGame() {
+      sound.click();
+      if (catcherInterval) clearInterval(catcherInterval);
+      switchTab('home');
+    }
+
+
+    /* ================= GAME 1: GOLDEN MATH QUEST ================= */
+    let mathState = { num1: 0, num2: 0, answer: 0, mode: 'add', streak: 0 };
+
+    function setMathMode(mode) {
+      sound.click();
+      mathState.mode = mode;
+      ['Add', 'Sub', 'Mul'].forEach(m => {
+        const btn = document.getElementById(`mathMode${m}`);
+        if (m.toLowerCase() === mode) {
+          btn.className = 'text-xs bg-amber-700 text-white font-bold px-2.5 py-1 rounded-lg';
+        } else {
+          btn.className = 'text-xs bg-amber-200 text-amber-900 font-bold px-2.5 py-1 rounded-lg';
+        }
+      });
+      initMathGame();
+    }
+
+    function initMathGame() {
+      let n1, n2, ans, opSymbol;
+
+      if (mathState.mode === 'add') {
+        n1 = Math.floor(Math.random() * 12) + 1;
+        n2 = Math.floor(Math.random() * 12) + 1;
+        ans = n1 + n2;
+        opSymbol = '+';
+      } else if (mathState.mode === 'sub') {
+        n1 = Math.floor(Math.random() * 15) + 5;
+        n2 = Math.floor(Math.random() * n1) + 1;
+        ans = n1 - n2;
+        opSymbol = '-';
+      } else {
+        n1 = Math.floor(Math.random() * 6) + 1;
+        n2 = Math.floor(Math.random() * 6) + 1;
+        ans = n1 * n2;
+        opSymbol = '×';
+      }
+
+      mathState.num1 = n1;
+      mathState.num2 = n2;
+      mathState.answer = ans;
+
+      document.getElementById('mathNum1').innerText = n1;
+      document.getElementById('mathNum2').innerText = n2;
+      document.getElementById('mathOp').innerText = opSymbol;
+      document.getElementById('mathStreak').innerText = mathState.streak;
+      document.getElementById('mathFeedback').innerText = '';
+
+      // Generate 3 choices
+      let options = [ans];
+      while (options.length < 3) {
+        let diff = (Math.floor(Math.random() * 5) + 1) * (Math.random() > 0.5 ? 1 : -1);
+        let wrongAns = ans + diff;
+        if (wrongAns >= 0 && !options.includes(wrongAns)) {
+          options.push(wrongAns);
+        }
+      }
+      options.sort(() => Math.random() - 0.5);
+
+      const grid = document.getElementById('mathOptionsGrid');
+      grid.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-bounce bg-amber-400 hover:bg-yellow-300 border-3 border-amber-800 text-amber-950 font-black text-2xl md:text-3xl py-3 rounded-2xl shadow-md';
+        btn.innerText = opt;
+        btn.onclick = (e) => checkMathAnswer(opt, e.target);
+        grid.appendChild(btn);
+      });
+    }
+
+    function checkMathAnswer(selected, targetBtn) {
+      const fb = document.getElementById('mathFeedback');
+      if (selected === mathState.answer) {
+        mathState.streak++;
+        state.mathSolved++;
+        sound.correct();
+        fb.className = 'h-8 font-bold text-lg flex items-center justify-center text-green-700';
+        fb.innerText = '✨ Correct! Golden Chest Unlocked!';
+
+        const coinsEarned = 10 + Math.min(10, mathState.streak * 2);
+        addCoins(coinsEarned, targetBtn);
+
+        setTimeout(initMathGame, 1000);
+      } else {
+        mathState.streak = 0;
+        sound.wrong();
+        fb.className = 'h-8 font-bold text-lg flex items-center justify-center text-red-600';
+        fb.innerText = '❌ Try again, Explorer!';
+        document.getElementById('mathStreak').innerText = 0;
+      }
+    }
+
+
+    /* ================= GAME 2: GOLDEN COIN CATCHER ================= */
+    let catcherCanvas, catcherCtx;
+    let catcherItems = [];
+    let catcherTimer = 30;
+    let catcherScore = 0;
+    let catcherInterval = null;
+    let isCatcherRunning = false;
+
+    function initCatcherGame() {
+      catcherCanvas = document.getElementById('catcherCanvas');
+      catcherCtx = catcherCanvas.getContext('2d');
+      resizeCatcherCanvas();
+
+      document.getElementById('catcherStartOverlay').classList.remove('hidden');
+      document.getElementById('catcherScore').innerText = 0;
+      document.getElementById('catcherTimer').innerText = 30;
+
+      // Event listener for taps/clicks
+      catcherCanvas.onclick = handleCatcherClick;
+    }
+
+    function resizeCatcherCanvas() {
+      if (!catcherCanvas) return;
+      const rect = catcherCanvas.getBoundingClientRect();
+      catcherCanvas.width = rect.width;
+      catcherCanvas.height = rect.height;
+    }
+
+    function startCatcherGameRound() {
+      sound.click();
+      document.getElementById('catcherStartOverlay').classList.add('hidden');
+      catcherScore = 0;
+      catcherTimer = 30;
+      catcherItems = [];
+      isCatcherRunning = true;
+
+      document.getElementById('catcherScore').innerText = 0;
+      document.getElementById('catcherTimer').innerText = 30;
+
+      if (catcherInterval) clearInterval(catcherInterval);
+
+      // Countdown Timer
+      catcherInterval = setInterval(() => {
+        catcherTimer--;
+        document.getElementById('catcherTimer').innerText = catcherTimer;
+
+        if (catcherTimer <= 0) {
+          endCatcherGame();
+        }
+      }, 1000);
+
+      requestAnimationFrame(updateCatcherLoop);
+    }
+
+    function spawnCatcherItem() {
+      if (!isCatcherRunning) return;
+      const types = [
+        { type: 'coin', label: '🪙', pts: 1, speed: 2, radius: 24 },
+        { type: 'star', label: '⭐', pts: 2, speed: 2.5, radius: 22 },
+        { type: 'chest', label: '👑', pts: 5, speed: 3.5, radius: 26 },
+        { type: 'bomb', label: '💣', pts: -3, speed: 2.8, radius: 24 }
+      ];
+
+      // Random weight for item spawning
+      const rand = Math.random();
+      let selected = types[0];
+      if (rand > 0.85) selected = types[3]; // bomb
+      else if (rand > 0.7) selected = types[2]; // chest
+      else if (rand > 0.4) selected = types[1]; // star
+
+      catcherItems.push({
+        ...selected,
+        x: Math.random() * (catcherCanvas.width - 60) + 30,
+        y: -30
+      });
+    }
+
+    let spawnCounter = 0;
+    function updateCatcherLoop() {
+      if (!isCatcherRunning) return;
+
+      catcherCtx.clearRect(0, 0, catcherCanvas.width, catcherCanvas.height);
+
+      spawnCounter++;
+      if (spawnCounter % 25 === 0) spawnCatcherItem();
+
+      for (let i = catcherItems.length - 1; i >= 0; i--) {
+        const item = catcherItems[i];
+        item.y += item.speed;
+
+        // Draw item emoji
+        catcherCtx.font = `${item.radius * 1.5}px Fredoka, sans-serif`;
+        catcherCtx.textAlign = 'center';
+        catcherCtx.textBaseline = 'middle';
+        catcherCtx.fillText(item.label, item.x, item.y);
+
+        // Remove if off screen
+        if (item.y > catcherCanvas.height + 40) {
+          catcherItems.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(updateCatcherLoop);
+    }
+
+    function handleCatcherClick(e) {
+      if (!isCatcherRunning) return;
+
+      const rect = catcherCanvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      for (let i = catcherItems.length - 1; i >= 0; i--) {
+        const item = catcherItems[i];
+        const dist = Math.hypot(clickX - item.x, clickY - item.y);
+
+        if (dist < item.radius + 15) {
+          // Hit!
+          if (item.type === 'bomb') {
+            sound.wrong();
+            catcherScore = Math.max(0, catcherScore - 3);
+          } else {
+            sound.coin();
+            catcherScore += item.pts;
+          }
+
+          document.getElementById('catcherScore').innerText = catcherScore;
+          catcherItems.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    function endCatcherGame() {
+      isCatcherRunning = false;
+      if (catcherInterval) clearInterval(catcherInterval);
+
+      const finalCoins = Math.floor(catcherScore * 1.5);
+      addCoins(finalCoins);
+
+      if (catcherScore > state.catcherHighScore) {
+        state.catcherHighScore = catcherScore;
+      }
+
+      document.getElementById('catcherStartOverlay').classList.remove('hidden');
+      document.getElementById('catcherStartOverlay').innerHTML = `
+        <span class="text-5xl mb-2">🎉 🪙</span>
+        <h3 class="text-2xl font-black text-amber-300 mb-1">Time's Up!</h3>
+        <p class="text-amber-100 text-base mb-2 font-bold">You scored <span class="text-yellow-300">${catcherScore}</span> points!</p>
+        <div class="bg-amber-900/80 px-4 py-1.5 rounded-xl text-yellow-300 font-bold mb-4">
+          +${finalCoins} Golden Coins Earned!
+        </div>
+        <button onclick="startCatcherGameRound()" class="btn-bounce bg-amber-400 hover:bg-yellow-300 text-amber-950 font-black text-lg px-6 py-2.5 rounded-2xl border-2 border-white shadow-lg">
+          PLAY AGAIN
+        </button>
+      `;
+    }
+
+
+    /* ================= GAME 3: WORD & PHONICS WIZARD ================= */
+    const wordList = [
+      { word: 'KING', clue: 'Ruler of the Golden Kingdom', emoji: '👑' },
+      { word: 'GOLD', clue: 'Shiny treasure metal', emoji: '🪙' },
+      { word: 'STAR', clue: 'Twinkles in the night sky', emoji: '⭐' },
+      { word: 'CROWN', clue: 'Worn on the royal head', emoji: '🤴' },
+      { word: 'MAGIC', clue: 'Spells and wizardry', emoji: '🪄' },
+      { word: 'DRAGON', clue: 'Friendly fire-breathing pet', emoji: '🐲' },
+      { word: 'SHIELD', clue: 'Protects the knight in battle', emoji: '🛡️' },
+      { word: 'CASTLE', clue: 'Home of kings and queens', emoji: '🏰' }
+    ];
+
+    let currentWordObj = null;
+    let selectedLetters = [];
+
+    function initWordGame() {
+      currentWordObj = wordList[Math.floor(Math.random() * wordList.length)];
+      selectedLetters = [];
+
+      document.getElementById('wordEmojiClue').innerText = currentWordObj.emoji;
+      document.getElementById('wordClueText').innerText = currentWordObj.clue;
+      document.getElementById('wordFeedback').innerText = '';
+      document.getElementById('wordScore').innerText = state.wordsSolved;
+
+      renderWordPuzzle();
+    }
+
+    function renderWordPuzzle() {
+      const answerBox = document.getElementById('wordAnswerBox');
+      const tilesBox = document.getElementById('wordLetterTiles');
+
+      answerBox.innerHTML = '';
+      tilesBox.innerHTML = '';
+
+      const targetWord = currentWordObj.word;
+
+      // Render Answer Slots
+      for (let i = 0; i < targetWord.length; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'w-10 h-12 md:w-12 md:h-14 bg-amber-200 border-2 border-amber-500 rounded-xl flex items-center justify-center font-black text-2xl text-amber-950 shadow-inner cursor-pointer';
+        if (selectedLetters[i]) {
+          slot.innerText = selectedLetters[i].letter;
+          slot.onclick = () => removeLetterTile(i);
+        }
+        answerBox.appendChild(slot);
+      }
+
+      // Generate scrambled letters array
+      if (!currentWordObj.scrambled) {
+        let arr = targetWord.split('');
+        arr.sort(() => Math.random() - 0.5);
+        currentWordObj.scrambled = arr.map((l, idx) => ({ id: idx, letter: l, used: false }));
+      }
+
+      // Render Available Letter Tiles
+      currentWordObj.scrambled.forEach((item) => {
+        const btn = document.createElement('button');
+        const isUsed = selectedLetters.some(s => s.id === item.id);
+        btn.className = `btn-bounce w-11 h-12 md:w-13 md:h-14 font-black text-2xl rounded-xl border-2 shadow-md ${
+          isUsed ? 'bg-amber-100 text-amber-300 border-amber-200 opacity-40 cursor-not-allowed' : 'bg-amber-400 text-amber-950 border-amber-700 hover:bg-yellow-300'
+        }`;
+        btn.innerText = item.letter;
+        btn.disabled = isUsed;
+        btn.onclick = (e) => selectLetterTile(item, e.target);
+        tilesBox.appendChild(btn);
+      });
+    }
+
+    function selectLetterTile(item, targetBtn) {
+      if (selectedLetters.length < currentWordObj.word.length) {
+        sound.click();
+        selectedLetters.push(item);
+        renderWordPuzzle();
+
+        if (selectedLetters.length === currentWordObj.word.length) {
+          checkWordAnswer();
+        }
+      }
+    }
+
+    function removeLetterTile(index) {
+      sound.click();
+      selectedLetters.splice(index, 1);
+      renderWordPuzzle();
+    }
+
+    function checkWordAnswer() {
+      const spelled = selectedLetters.map(s => s.letter).join('');
+      const fb = document.getElementById('wordFeedback');
+
+      if (spelled === currentWordObj.word) {
+        sound.correct();
+        state.wordsSolved++;
+        fb.className = 'h-8 font-bold text-lg flex items-center justify-center text-green-700';
+        fb.innerText = '🌟 Wonderful! You spelled it right!';
+
+        addCoins(15);
+        delete currentWordObj.scrambled;
+        setTimeout(initWordGame, 1200);
+      } else {
+        sound.wrong();
+        fb.className = 'h-8 font-bold text-lg flex items-center justify-center text-red-600';
+        fb.innerText = '❌ Not quite right, try again!';
+      }
+    }
+
+    function getWordHint() {
+      if (state.coins < 2) {
+        alert('You need at least 2 Golden Coins for a hint!');
+        return;
+      }
+      addCoins(-2);
+      document.getElementById('wordFeedback').className = 'h-8 font-bold text-sm text-amber-800 flex items-center justify-center';
+      document.getElementById('wordFeedback').innerText = `💡 First letter is: "${currentWordObj.word[0]}"`;
+    }
+
+
+    /* ================= GAME 4: ROYAL MEMORY MATCH ================= */
+    const memoryIcons = ['👑', '🏰', '🐲', '🛡️', '🪄', '💎'];
+    let memoryCards = [];
+    let flippedCards = [];
+    let memoryMatches = 0;
+    let memoryMoves = 0;
+
+    function initMemoryGame() {
+      memoryMatches = 0;
+      memoryMoves = 0;
+      flippedCards = [];
+
+      document.getElementById('memoryMatches').innerText = '0/6';
+      document.getElementById('memoryMoves').innerText = '0';
+      document.getElementById('memoryFeedback').innerText = '';
+
+      // Create pairs
+      const cardDeck = [...memoryIcons, ...memoryIcons].sort(() => Math.random() - 0.5);
+      memoryCards = cardDeck.map((icon, idx) => ({
+        id: idx,
+        icon: icon,
+        flipped: false,
+        matched: false
+      }));
+
+      renderMemoryGrid();
+    }
+
+    function renderMemoryGrid() {
+      const grid = document.getElementById('memoryGrid');
+      grid.innerHTML = '';
+
+      memoryCards.forEach((card, idx) => {
+        const cardWrap = document.createElement('div');
+        cardWrap.className = 'perspective-1000 h-20 md:h-24 cursor-pointer';
+
+        const inner = document.createElement('div');
+        inner.className = `transform-style-3d relative w-full h-full rounded-2xl shadow-md border-2 border-amber-600 ${
+          card.flipped || card.matched ? 'rotate-y-180' : ''
+        }`;
+
+        // Front (Hidden face)
+        const front = document.createElement('div');
+        front.className = 'backface-hidden absolute inset-0 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl flex items-center justify-center text-2xl font-black text-amber-950';
+        front.innerText = '❓';
+
+        // Back (Revealed face)
+        const back = document.createElement('div');
+        back.className = 'backface-hidden rotate-y-180 absolute inset-0 bg-amber-100 border-2 border-amber-400 rounded-2xl flex items-center justify-center text-3xl md:text-4xl';
+        back.innerText = card.icon;
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+        cardWrap.appendChild(inner);
+
+        cardWrap.onclick = () => flipMemoryCard(idx);
+        grid.appendChild(cardWrap);
+      });
+    }
+
+    function flipMemoryCard(index) {
+      const card = memoryCards[index];
+      if (card.flipped || card.matched || flippedCards.length >= 2) return;
+
+      sound.click();
+      card.flipped = true;
+      flippedCards.push(card);
+      renderMemoryGrid();
+
+      if (flippedCards.length === 2) {
+        memoryMoves++;
+        document.getElementById('memoryMoves').innerText = memoryMoves;
+        checkMemoryMatch();
+      }
+    }
+
+    function checkMemoryMatch() {
+      const [c1, c2] = flippedCards;
+
+      if (c1.icon === c2.icon) {
+        sound.correct();
+        c1.matched = true;
+        c2.matched = true;
+        memoryMatches++;
+        document.getElementById('memoryMatches').innerText = `${memoryMatches}/6`;
+        flippedCards = [];
+
+        if (memoryMatches === 6) {
+          state.memoryWon++;
+          addCoins(25);
+          document.getElementById('memoryFeedback').innerText = '🎉 Fantastic Memory! You won +25 Coins!';
+          triggerConfetti();
+        }
+      } else {
+        sound.wrong();
+        setTimeout(() => {
+          c1.flipped = false;
+          c2.flipped = false;
+          flippedCards = [];
+          renderMemoryGrid();
+        }, 900);
+      }
+    }
+
+
+    /* ================= ROYAL SHOP & WARDROBE ================= */
+    function renderShop() {
+      renderShopSection('shopHeadwearGrid', shopCatalog.headwear, 'headwear');
+      renderShopSection('shopPetGrid', shopCatalog.pets, 'pet');
+      renderShopSection('shopTitleGrid', shopCatalog.titles, 'title');
+    }
+
+    function renderShopSection(gridId, items, type) {
+      const grid = document.getElementById(gridId);
+      grid.innerHTML = '';
+
+      items.forEach(item => {
+        const isUnlocked = state.inventory.includes(item.id) || item.price === 0;
+        const isEquipped = state[type] === item.id;
+
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-2xl border-2 text-center flex flex-col justify-between ${
+          isEquipped ? 'bg-amber-400 border-white text-amber-950 font-black' : 'bg-amber-900/60 border-amber-600 text-amber-100'
+        }`;
+
+        card.innerHTML = `
+          <div class="text-3xl my-1">${item.icon || '📜'}</div>
+          <div class="font-bold text-sm mb-1">${item.name}</div>
+          <div class="mt-2">
+            ${
+              isEquipped
+                ? `<span class="text-xs bg-amber-950 text-amber-300 px-2.5 py-1 rounded-full font-bold">EQUIPPED</span>`
+                : isUnlocked
+                ? `<button onclick="equipItem('${type}', '${item.id}')" class="btn-bounce text-xs bg-amber-500 text-amber-950 font-bold px-3 py-1 rounded-lg w-full">EQUIP</button>`
+                : `<button onclick="buyItem('${type}', '${item.id}', ${item.price})" class="btn-bounce text-xs bg-yellow-400 text-amber-950 font-bold px-2 py-1 rounded-lg w-full flex items-center justify-center gap-1">🪙 ${item.price}</button>`
+            }
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function buyItem(type, id, price) {
+      if (state.coins < price) {
+        sound.wrong();
+        alert('Not enough Golden Coins!');
+        return;
+      }
+      sound.coin();
+      state.coins -= price;
+      state.inventory.push(id);
+      state[type] = id;
+      saveUserData();
+      renderShop();
+    }
+
+    function equipItem(type, id) {
+      sound.click();
+      state[type] = id;
+      saveUserData();
+      renderShop();
+    }
+
+
+    /* ================= TROPHIES VIEW ================= */
+    function renderTrophies() {
+      const grid = document.getElementById('trophyGrid');
+      grid.innerHTML = '';
+
+      trophiesCatalog.forEach(t => {
+        const unlocked = t.req(state);
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-2xl border-2 flex items-center gap-3 ${
+          unlocked ? 'bg-amber-400/90 border-white text-amber-950' : 'bg-amber-900/40 border-amber-800 text-amber-400/60'
+        }`;
+
+        card.innerHTML = `
+          <div class="text-3xl p-2 rounded-xl bg-amber-950/30">${t.icon}</div>
+          <div>
+            <h4 class="font-black text-sm">${t.name} ${unlocked ? '✅' : '🔒'}</h4>
+            <p class="text-xs ${unlocked ? 'text-amber-900' : 'text-amber-300/60'} font-semibold">${t.desc}</p>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function checkTrophies() {
+      // Automatic trophy checks run on coin update
+    }
+
+
+    /* ================= CELEBRATION MODAL & EFFECTS ================= */
+    function showCelebration(title, subtitle, reward) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalSubtitle').innerText = subtitle;
+      document.getElementById('modalRewardBox').innerText = reward;
+      document.getElementById('celebrationModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      sound.click();
+      document.getElementById('celebrationModal').classList.add('hidden');
+    }
+
+    function triggerConfetti() {
+      if (window.confetti) {
+        window.confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+
+    /* ================= CANVAS SPARKLE BACKGROUND ================= */
+    const bgCanvas = document.getElementById('bgCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let bgStars = [];
+
+    function resizeBgCanvas() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeBgCanvas);
+    resizeBgCanvas();
+
+    for (let i = 0; i < 70; i++) {
+      bgStars.push({
+        x: Math.random() * bgCanvas.width,
+        y: Math.random() * bgCanvas.height,
+        size: Math.random() * 3 + 1,
+        speed: Math.random() * 0.6 + 0.2,
+        opacity: Math.random()
+      });
+    }
+
+    function animateBg() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      bgCtx.fillStyle = '#ffd700';
+
+      bgStars.forEach(star => {
+        bgCtx.globalAlpha = star.opacity;
+        bgCtx.beginPath();
+        bgCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        bgCtx.fill();
+
+        star.y -= star.speed;
+        if (star.y < 0) star.y = bgCanvas.height;
+      });
+
+      requestAnimationFrame(animateBg);
+    }
+
+
+    /* ================= INITIALIZATION ================= */
+    window.onload = function() {
+      loadUserData();
+      animateBg();
+
+      // Enable AudioContext on first touch/click
+      document.body.addEventListener('click', () => sound.init(), { once: true });
+    };
+  </script>
+</body>
+</html>
